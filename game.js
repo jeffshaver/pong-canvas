@@ -1,5 +1,9 @@
+// Canvas
+
 const canvas = document.querySelector('.gameCanvas')
 const canvasContext = canvas.getContext('2d')
+
+// Constants
 
 const FPS = 60
 const PADDLE_HEIGHT = 100
@@ -74,9 +78,7 @@ function draw() {
 
   drawCircle(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2, true, 'white')
 
-  // scores
-  canvasContext.fillText(player1Score, 100, 100)
-  canvasContext.fillText(player2Score, canvas.width - 100, 100)
+  drawScores()
 }
 
 function drawRect(left, top, width, height, color) {
@@ -98,6 +100,11 @@ function drawNet() {
   }
 }
 
+function drawScores() {
+  canvasContext.fillText(player1Score, 100, 100)
+  canvasContext.fillText(player2Score, canvas.width - 100, 100)
+}
+
 function resetBall() {
   if (player1Score >= WINNING_SCORE || player2Score >= WINNING_SCORE) {
     paused = true
@@ -109,49 +116,49 @@ function resetBall() {
   ballY = CENTER_Y
 }
 
+function changeBallPosition() {
+  ballX = ballX + velocityX
+  ballY = ballY + velocityY
+}
+
 function move() {
   if (paused) {
     return
   }
 
-  ballX = ballX + velocityX
-  ballY = ballY + velocityY
+  changeBallPosition()
 
   moveComputer()
 
-  // if ball hit the right paddle
-  if (
-    ballX + BALL_RADIUS >= canvas.width - PADDDLE_WIDTH &&
-    ballY > paddle2Y &&
-    ballY < paddle2Y + PADDLE_HEIGHT
-  ) {
-    let deltaY = ballY + 5 - (paddle2Y + PADDLE_HEIGHT / 2)
+  const ballHitLeftPaddle = checkLeftPaddleCollision()
+  const ballHitRightPaddle = checkRightPaddleCollision()
+  const ballHitLeftEdge = checkLeftEdgeCollision()
+  const ballHitRightEdge = checkRightEdgeCollision()
+
+  if (ballHitRightPaddle) {
+    let deltaY = ballY + BALL_RADIUS - (paddle2Y + PADDLE_HEIGHT / 2)
 
     velocityX = -velocityX
     velocityY = deltaY * 0.35
-    // if ball hit the right edge
-  } else if (ballX + BALL_RADIUS >= canvas.width) {
+  } else if (ballHitRightEdge) {
     player1Score = player1Score + 1
     resetBall()
   }
 
-  // if ball hit the left paddle
-  if (
-    ballX - BALL_RADIUS <= PADDDLE_WIDTH &&
-    ballY > paddle1Y &&
-    ballY < paddle1Y + PADDLE_HEIGHT
-  ) {
+  if (ballHitLeftPaddle) {
     let deltaY = ballY - BALL_RADIUS - (paddle1Y + PADDLE_HEIGHT / 2)
 
     velocityX = -velocityX
     velocityY = deltaY * 0.35
-    // if ball hit the left edge
-  } else if (ballX - BALL_RADIUS <= 0) {
+  } else if (ballHitLeftEdge) {
     player2Score = player2Score + 1
     resetBall()
   }
 
-  if (ballY + BALL_RADIUS >= canvas.height || ballY - BALL_RADIUS <= 0) {
+  const ballHitBottomEdge = checkBottomEdgeCollision()
+  const ballHitTopEdge = checkTopEdgeCollision()
+
+  if (ballHitBottomEdge || ballHitTopEdge) {
     velocityY = -velocityY
   }
 }
@@ -162,4 +169,36 @@ function moveComputer() {
   } else if (paddle2Y > ballY + 35) {
     paddle2Y = paddle2Y - 6
   }
+}
+
+function checkBottomEdgeCollision() {
+  return ballY + BALL_RADIUS >= canvas.height
+}
+
+function checkTopEdgeCollision() {
+  return ballY - BALL_RADIUS <= 0
+}
+
+function checkLeftPaddleCollision() {
+  return (
+    ballX - BALL_RADIUS <= PADDDLE_WIDTH &&
+    ballY > paddle1Y &&
+    ballY < paddle1Y + PADDLE_HEIGHT
+  )
+}
+
+function checkRightPaddleCollision() {
+  return (
+    ballX + BALL_RADIUS >= canvas.width - PADDDLE_WIDTH &&
+    ballY > paddle2Y &&
+    ballY < paddle2Y + PADDLE_HEIGHT
+  )
+}
+
+function checkLeftEdgeCollision() {
+  return ballX - BALL_RADIUS <= 0
+}
+
+function checkRightEdgeCollision() {
+  return ballX + BALL_RADIUS >= canvas.width
 }
